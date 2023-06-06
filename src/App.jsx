@@ -29,6 +29,22 @@ const App = () => {
       row: (i) => {
         console.log(i);
       },
+      cell: (state) => {
+        return InputState("todo", state, data, setData);
+      },
+    },
+    {
+      name: "City",
+      selector: (row) => row.city,
+      sortable: true,
+      filterable: true,
+      reorder: true,
+      row: (i) => {
+        console.log(i);
+      },
+      cell: (state) => {
+        return InputState("city", state, data, setData);
+      },
     },
     {
       name: "Image",
@@ -63,7 +79,7 @@ const App = () => {
             name="status"
             id="status"
             onChange={(e) => handleClick(e.target.value, state)}
-            className="bg-blue-600 text-white px-3 py-1 rounded"
+            className="btn"
           >
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -72,7 +88,39 @@ const App = () => {
         );
       },
     },
+    {
+      cell: (state) => {
+        return (
+          <button
+            className="btn"
+            type="button"
+            onClick={(e) => updateData(e, state)}
+          >
+            Action
+          </button>
+        );
+      },
+    },
   ]);
+
+  const InputState = (name, state, data, setData) => {
+    // const [newVal, setNewVal] = useState(state[name]);
+    const handleChange = (e, id) => {
+      const { name, value } = e.target;
+      const editData = data.map((item) => {
+        return item.id === id && name ? { ...item, [name]: value } : item;
+      });
+      setData(editData);
+    };
+    return (
+      <input
+        className="input-table"
+        name={name}
+        value={state[name]}
+        onChange={(e) => handleChange(e, state.id)}
+      />
+    );
+  };
 
   const handleClick = async (value, state) => {
     try {
@@ -88,22 +136,27 @@ const App = () => {
       console.log(error);
     }
   };
-  const subHeaderComponent = useMemo(() => {
-    return <button>Export</button>;
-  });
+
+  const updateData = async (e, state) => {
+    try {
+      const res = await axios.patch(`http://localhost:3000/todos/${state.id}`, {
+        ...state,
+      });
+      const updatedTotos = todos.map((item) => {
+        return item.id === state.id ? { ...state } : item;
+      });
+      setTodos(updatedTotos);
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+    console.log(state);
+  };
 
   return (
     <>
       <Fancybox>
-        <DataTable
-          title="Contact List"
-          pagination
-          columns={columns}
-          data={data}
-          persistTableHead
-          subHeader
-          subHeaderComponent={subHeaderComponent}
-        />
+        <DataTable pagination columns={columns} data={data} />
       </Fancybox>
     </>
   );
